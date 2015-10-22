@@ -6,9 +6,9 @@ except ImportError:
 
 class Storage(object):
 
-    def save_post(self, title, text, user_id, tags, draft=False,
-                  post_date=None, last_modified_date=None, meta_data=None,
-                  post_id=None):
+    def save_post(self, title, text, user_id, tags, title_image=None,
+                summary_text=None, draft=False, post_date=None,
+                last_modified_date=None, meta_data=None, post_id=None):
         """
         Persist the blog post data. If ``post_id`` is ``None`` or ``post_id``
         is invalid, the post must be inserted into the storage. If ``post_id``

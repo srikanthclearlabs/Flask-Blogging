@@ -2,7 +2,7 @@ from .engine import BloggingEngine
 from .processor import PostProcessor
 from .sqlastorage import SQLAStorage
 from .storage import Storage
-
+from .forms import BlogEditor
 
 """
 Flask-Blogging is a Flask extension to add blog support to your

@@ -6,7 +6,7 @@ except ImportError:
 from flask.ext.login import login_required, current_user
 from flask import Blueprint, current_app, render_template, request, redirect, \
     url_for, flash, make_response
-from flask_blogging.forms import BlogEditor
+from .forms import BlogEditor
 import math
 from werkzeug.contrib.atom import AtomFeed
 import datetime
@@ -33,6 +33,8 @@ def _clear_cache(cache):
 
 def _store_form_data(blog_form, storage, user, post):
     title = blog_form.title.data
+    title_image = blog_form.title_image.data
+    summary_text = blog_form.summary_text.data
     text = blog_form.text.data
     tags = blog_form.tags.data.split(",")
     draft = blog_form.draft.data
@@ -42,9 +44,9 @@ def _store_form_data(blog_form, storage, user, post):
     last_modified_date = datetime.datetime.utcnow()
     post_id = post.get("post_id")
     pid = storage.save_post(title, text, user_id, tags, draft=draft,
-                            post_date=post_date,
+                            title_image=title_image, post_date=post_date,
                             last_modified_date=last_modified_date,
-                            post_id=post_id)
+                            summary_text=summary_text, post_id=post_id)
     return pid
 
 
@@ -87,7 +89,6 @@ def _is_blogger(blogger_permission):
     is_blogger = authenticated and \
         blogger_permission.require().can()
     return is_blogger
-
 
 def index(count, page):
     """
@@ -198,6 +199,8 @@ def editor(post_id):
                     slug = post_processor.create_slug(form.title.data)
                     return redirect(url_for("blogging.page_by_id", post_id=pid,
                                             slug=slug))
+
+                    return redirect(url_for("blogging.page_by_id", post_id=pid,slug=slug))
                 else:
                     flash("There were errors in blog submission", "warning")
                     return render_template("blogging/editor.html", form=form,
@@ -209,6 +212,8 @@ def editor(post_id):
                             (current_user.get_id() == post["user_id"]):
                         tags = ", ".join(post["tags"])
                         form = BlogEditor(title=post["title"],
+                                          title_image=post['title_image'],
+                                          summary_text=post['summary_text'],
                                           text=post["text"], tags=tags)
                         return render_template("blogging/editor.html",
                                                form=form, post_id=post_id,

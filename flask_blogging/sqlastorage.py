@@ -50,9 +50,9 @@ class SQLAStorage(Storage):
     def metadata(self):
         return self._metadata
 
-    def save_post(self, title, text, user_id, tags, draft=False,
-                  post_date=None, last_modified_date=None, meta_data=None,
-                  post_id=None):
+    def save_post(self, title, text, user_id, tags, title_image=None,
+                summary_text=None, draft=False, post_date=None,
+                last_modified_date=None, meta_data=None, post_id=None):
         """
         Persist the blog post data. If ``post_id`` is ``None`` or ``post_id``
         is invalid, the post must be inserted into the storage. If ``post_id``
@@ -104,13 +104,14 @@ class SQLAStorage(Storage):
                         self._post_table.c.id == post_id)
                 post_statement = post_statement.values(
                     title=title, text=text, post_date=post_date,
+                    title_image=title_image, summary_text=summary_text,
                     last_modified_date=last_modified_date, draft=draft
                 )
 
                 post_result = conn.execute(post_statement)
                 post_id = post_result.inserted_primary_key[0] \
                     if post_id is None else post_id
-                self._save_tags(tags, post_id, conn)
+                # self._save_tags(tags, post_id, conn)
                 self._save_user_post(user_id, post_id, conn)
             except Exception as e:
                 self._logger.exception(str(e))
@@ -135,9 +136,11 @@ class SQLAStorage(Storage):
                 post_result = conn.execute(post_statement).fetchone()
                 if post_result is not None:
                     r = dict(post_id=post_result[0], title=post_result[1],
-                             text=post_result[2], post_date=post_result[3],
-                             last_modified_date=post_result[4],
-                             draft=post_result[5])
+                             title_image=post_result[2],
+                             summary_text=post_result[3],
+                             text=post_result[4], post_date=post_result[5],
+                             last_modified_date=post_result[6],
+                             draft=post_result[7])
                     # get the tags
                     tag_statement = sqla.select([self._tag_table.c.text]). \
                         where(
@@ -307,7 +310,8 @@ class SQLAStorage(Storage):
                 tag_insert_statement = tag_insert_statement.values(text=tag)
                 result = conn.execute(tag_insert_statement)
                 tag_id = result.inserted_primary_key[0]
-            except sqla.exc.IntegrityError as e:
+            # except sqla.exc.IntegrityError as e:
+            except Exception as e:
                 tag_select_statement = sqla.select([self._tag_table]).where(
                     self._tag_table.c.text == tag)
                 result = conn.execute(tag_select_statement).fetchone()
@@ -383,8 +387,9 @@ class SQLAStorage(Storage):
                     sqla.Column("post_date", sqla.DateTime),
                     sqla.Column("last_modified_date", sqla.DateTime),
                     # if 1 then make it a draft
-                    sqla.Column("draft", sqla.SmallInteger, default=0)
-
+                    sqla.Column("draft", sqla.SmallInteger, default=0),
+                    sqla.Column("title_image", sqla.String(512)),
+                    sqla.Column("summary_text", sqla.Text)
                 )
                 self._logger.debug("Created table with table name %s" %
                                    post_table_name)
